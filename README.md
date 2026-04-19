@@ -18,26 +18,24 @@ Kimi For Coding (OAuth) provider extension for pi, matching the official kimi-cl
 
 ## Install
 
-### Option 1: Global extensions directory (recommended)
+### Install
 
 ```bash
-# Clone and link
-git clone https://github.com/22GNUs/pi-kimi-full.git ~/.pi/agent/extensions/pi-kimi-full
+pi install git:github.com/22GNUs/pi-kimi-full.git
+```
+
+Or manually clone into pi's global extensions directory:
+
+```bash
+git clone git:github.com/22GNUs/pi-kimi-full.git ~/.pi/agent/extensions/pi-kimi-full
 ```
 
 Pi auto-discovers extensions in `~/.pi/agent/extensions/`.
 
-### Option 2: Per-project
+### Per-project
 
 ```bash
-# Clone into your project
-git clone https://github.com/22GNUs/pi-kimi-full.git .pi/extensions/pi-kimi-full
-```
-
-### Option 3: One-off test
-
-```bash
-pi -e https://github.com/22GNUs/pi-kimi-full.git
+git clone git:github.com/22GNUs/pi-kimi-full.git .pi/extensions/pi-kimi-full
 ```
 
 ## Usage
