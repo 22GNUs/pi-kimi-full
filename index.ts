@@ -15,8 +15,8 @@
  *
  * Key behaviors that mirror kimi-cli:
  *   - OAuth device flow with scope: kimi-code
- *   - Seven X-Msh-* headers + User-Agent matching the *latest* kimi-cli
- *     (version fetched from PyPI at startup, no hardcoded version)
+ *   - Seven X-Msh-* headers + User-Agent matching the latest kimi-cli
+ *     (fallback version pinned; background PyPI fetch warms cache non-blocking)
  *   - Shared ~/.kimi/device_id with locally-installed kimi-cli
  *   - prompt_cache_key for session-scoped cache reuse
  *   - thinking + reasoning_effort fields per thinking level
@@ -195,19 +195,15 @@ export default function (pi: ExtensionAPI) {
 
   registerKimiProvider()
 
-  pi.on("session_start", async () => {
+  pi.on("session_start", () => {
     currentSessionId = crypto.randomUUID()
 
     if (versionFetchStarted) return
     versionFetchStarted = true
 
-    try {
-      await getKimiCliVersion()
-    } catch {
-      /* kimiHeaders() already falls back to the pinned version */
-    }
-
-    registerKimiProvider()
+    // Fire-and-forget: warm the version cache in the background.
+    // Must not await — pi blocks on session_start handlers.
+    getKimiCliVersion().catch(() => {})
   })
 
   pi.on("before_provider_request", (event) => {
