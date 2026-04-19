@@ -31,11 +31,39 @@ export function getDeviceId(): string {
 }
 
 // =============================================================================
-// Dynamic kimi-cli version — fetched from PyPI, cached for the process lifetime
+// Dynamic kimi-cli version — fetched from PyPI, cached in memory + on disk
 // =============================================================================
+
+const VERSION_CACHE_PATH = path.join(DEVICE_ID_DIR, ".pi_kimi_version_cache")
+const DAY_MS = 24 * 60 * 60 * 1000
 
 let cachedVersion: string | undefined
 let versionFetchPromise: Promise<string> | undefined
+
+function readDiskVersionCache(): string | undefined {
+  try {
+    const raw = fs.readFileSync(VERSION_CACHE_PATH, "utf8")
+    const data = JSON.parse(raw) as { version?: string; fetchedAt?: string }
+    if (
+      data.version &&
+      data.fetchedAt &&
+      Date.now() - new Date(data.fetchedAt).getTime() < DAY_MS
+    ) {
+      return data.version
+    }
+  } catch {}
+  return undefined
+}
+
+function writeDiskVersionCache(version: string) {
+  try {
+    fs.writeFileSync(
+      VERSION_CACHE_PATH,
+      JSON.stringify({ version, fetchedAt: new Date().toISOString() }),
+      { mode: 0o600 }
+    )
+  } catch {}
+}
 
 /**
  * Fetch the latest kimi-cli version from the PyPI JSON API.
@@ -46,14 +74,27 @@ let versionFetchPromise: Promise<string> | undefined
  * We mirror this by fetching the latest published version so the plugin
  * stays current without code changes.
  *
+ * Caching strategy (daily):
+ *   1. In-memory cache (process lifetime)
+ *   2. Disk cache at ~/.kimi/.pi_kimi_version_cache (24h TTL)
+ *   3. Live PyPI fetch (10s timeout)
+ *   4. Hard-coded fallback constant
+ *
  * Falls back to `KIMI_CLI_VERSION_FALLBACK` if PyPI is unreachable.
- * Result is cached for the process lifetime.
  */
 export async function getKimiCliVersion(): Promise<string> {
   if (cachedVersion) return cachedVersion
   if (versionFetchPromise) return versionFetchPromise
 
   versionFetchPromise = (async () => {
+    // 2. Disk cache (daily)
+    const disk = readDiskVersionCache()
+    if (disk) {
+      cachedVersion = disk
+      return disk
+    }
+
+    // 3. Live fetch
     try {
       const res = await fetch(PYPI_KIMI_CLI_URL, {
         signal: AbortSignal.timeout(10_000),
@@ -64,6 +105,7 @@ export async function getKimiCliVersion(): Promise<string> {
       const version = json?.info?.version
       if (version && /^\d+\.\d+\.\d+$/.test(version)) {
         cachedVersion = version
+        writeDiskVersionCache(version)
         return version
       }
       throw new Error("Invalid version from PyPI")
@@ -83,6 +125,21 @@ export async function getKimiCliVersion(): Promise<string> {
  */
 export function getCachedKimiCliVersion(): string {
   return cachedVersion ?? KIMI_CLI_VERSION_FALLBACK
+}
+
+/**
+ * Mutate an existing headers object in-place with the latest cached version.
+ *
+ * pi stores provider.headers by reference and re-reads it via
+ * `Object.entries()` on every request, so in-place mutation updates live
+ * requests without re-registering the provider.
+ */
+export function updateHeadersVersion(
+  headers: Record<string, string>,
+  version: string
+) {
+  headers["User-Agent"] = `KimiCLI/${version}`
+  headers["X-Msh-Version"] = version
 }
 
 // =============================================================================

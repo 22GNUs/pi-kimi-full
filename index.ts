@@ -16,7 +16,7 @@
  * Key behaviors that mirror kimi-cli:
  *   - OAuth device flow with scope: kimi-code
  *   - Seven X-Msh-* headers + User-Agent matching the latest kimi-cli
- *     (fallback version pinned; background PyPI fetch warms cache non-blocking)
+ *     (daily PyPI fetch with disk cache; headers auto-update when new version lands)
  *   - Shared ~/.kimi/device_id with locally-installed kimi-cli
  *   - prompt_cache_key for session-scoped cache reuse
  *   - thinking + reasoning_effort fields per thinking level
@@ -26,7 +26,7 @@
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent"
 import { API_BASE_URL, MODEL_ID, PROVIDER_ID } from "./constants.ts"
-import { getKimiCliVersion, kimiHeaders } from "./headers.ts"
+import { getKimiCliVersion, kimiHeaders, updateHeadersVersion } from "./headers.ts"
 import {
   loginKimi,
   refreshKimiToken,
@@ -126,13 +126,18 @@ function isKimiRequestModel(model: string): boolean {
 // =============================================================================
 
 export default function (pi: ExtensionAPI) {
+  // Mutable headers object — pi stores it by reference and re-reads via
+  // Object.entries() on every request, so in-place mutations update live
+  // requests without re-registering the provider.
+  const providerHeaders = kimiHeaders()
+
   const registerKimiProvider = () => {
     pi.registerProvider(PROVIDER_ID, {
       baseUrl: API_BASE_URL,
       apiKey: "KIMI_FOR_CODING_DUMMY",
       api: "openai-completions",
       authHeader: true,
-      headers: kimiHeaders(),
+      headers: providerHeaders,
       models: [
         {
           id: MODEL_ID,
@@ -201,9 +206,13 @@ export default function (pi: ExtensionAPI) {
     if (versionFetchStarted) return
     versionFetchStarted = true
 
-    // Fire-and-forget: warm the version cache in the background.
-    // Must not await — pi blocks on session_start handlers.
-    getKimiCliVersion().catch(() => {})
+    // Fire-and-forget: fetch latest version in the background.
+    // pi blocks on async session_start handlers, so we must not await.
+    // When the version lands, mutate providerHeaders in-place; pi reads
+    // headers by reference on every request, so live requests pick it up.
+    getKimiCliVersion()
+      .then((version) => updateHeadersVersion(providerHeaders, version))
+      .catch(() => {})
   })
 
   pi.on("before_provider_request", (event) => {
