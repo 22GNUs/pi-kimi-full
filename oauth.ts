@@ -4,7 +4,6 @@ import {
   OAUTH_DEVICE_AUTH_URL,
   OAUTH_DEVICE_GRANT,
   OAUTH_REFRESH_GRANT,
-  OAUTH_SCOPE,
   OAUTH_TOKEN_URL,
   REFRESH_SAFETY_WINDOW_MS,
 } from "./constants.ts"
@@ -134,7 +133,6 @@ async function postForm<T>(url: string, params: Record<string, string>): Promise
 export async function startDeviceAuth(): Promise<DeviceAuth> {
   return postForm<DeviceAuth>(OAUTH_DEVICE_AUTH_URL, {
     client_id: OAUTH_CLIENT_ID,
-    scope: OAUTH_SCOPE,
   })
 }
 

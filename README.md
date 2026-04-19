@@ -5,7 +5,7 @@ Kimi For Coding (OAuth) provider extension for pi, matching the official kimi-cl
 ## What it does
 
 - Registers `kimi-for-coding-oauth` provider with pi
-- Uses the official Kimi device flow OAuth against `https://auth.kimi.com` with `scope: kimi-code`
+- Uses the official Kimi device flow OAuth against `https://auth.kimi.com`
 - Talks to `https://api.kimi.com/coding/v1` via OpenAI-compatible completions API
 - Sends the same `User-Agent` / `X-Msh-*` fingerprint headers as `kimi-cli`
 - **Dynamically fetches the latest kimi-cli version** from PyPI at startup — no hardcoded version
@@ -14,7 +14,7 @@ Kimi For Coding (OAuth) provider extension for pi, matching the official kimi-cl
 - Model discovery from `GET /coding/v1/models` to get the correct wire model id and context length
 - Currently the only way to get Kimi K2.6 outside of using Kimi CLI + OAuth
 
-> **Note:** This is the K2.6 / `kimi-for-coding` OAuth path. Moonshot routes static `sk-kimi-...` API keys to K2.5, and OAuth tokens with `scope: kimi-code` to K2.6.
+> **Note:** This is the K2.6 / `kimi-for-coding` OAuth path. Moonshot routes static `sk-kimi-...` API keys to K2.5, and OAuth tokens (obtained via device flow) to K2.6.
 
 ## Install
 
@@ -69,18 +69,19 @@ Use `Ctrl+T` or `/think` in pi to cycle through thinking levels.
 
 ## Version Strategy
 
-kimi-cli itself reads its version dynamically via `importlib.metadata.version("kimi-cli")`. We mirror this by fetching the latest version from the PyPI JSON API at startup. If the fetch fails, we fall back to a known-good pinned version.
+kimi-cli itself reads its version dynamically via `importlib.metadata.version("kimi-cli")`. We mirror this by fetching the latest version from the PyPI JSON API. A 24-hour disk cache at `~/.kimi/.pi_kimi_version_cache` avoids repeated requests, and a hard-coded fallback ensures the extension works even when PyPI is unreachable.
 
-This means **no code changes are needed when kimi-cli updates** — the next time pi starts, the extension automatically picks up the new version.
+This means **no code changes are needed when kimi-cli updates** — the extension automatically picks up the new version within a day.
 
 ## Files the extension touches
 
 | Path | Purpose |
 |---|---|
 | `~/.kimi/device_id` | Stable UUID used in `X-Msh-Device-Id`. Shared with kimi-cli. |
+| `~/.kimi/.pi_kimi_version_cache` | Daily cache for the latest kimi-cli version fetched from PyPI. |
 | `~/.pi/agent/auth.json` | Token storage for `kimi-for-coding-oauth` provider, managed by pi. |
 
-No other state is persisted. Credentials are never written to `~/.kimi/credentials/`; that path belongs to kimi-cli, and sharing it would cause refresh-token races.
+Credentials are never written to `~/.kimi/credentials/`; that path belongs to kimi-cli, and sharing it would cause refresh-token races.
 
 ## Architecture
 

@@ -134,7 +134,6 @@ export default function (pi: ExtensionAPI) {
   const registerKimiProvider = () => {
     pi.registerProvider(PROVIDER_ID, {
       baseUrl: API_BASE_URL,
-      apiKey: "KIMI_FOR_CODING_DUMMY",
       api: "openai-completions",
       authHeader: true,
       headers: providerHeaders,
@@ -171,9 +170,8 @@ export default function (pi: ExtensionAPI) {
 
         modifyModels(models, credentials) {
           const discovery = (credentials as KimiOAuthCredentials)._discovery
-          if (discovery?.model_id) {
-            cachedDiscovery = discovery
-          }
+          // Always overwrite to avoid stale state from previous accounts/tiers.
+          cachedDiscovery = discovery ?? {}
 
           return models.map((model) => {
             if (model.id !== MODEL_ID) return model

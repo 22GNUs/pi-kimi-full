@@ -11,7 +11,6 @@ export const OAUTH_HOST = "https://auth.kimi.com"
 export const OAUTH_DEVICE_AUTH_URL = `${OAUTH_HOST}/api/oauth/device_authorization`
 export const OAUTH_TOKEN_URL = `${OAUTH_HOST}/api/oauth/token`
 export const OAUTH_CLIENT_ID = "17e5f671-d194-4dfb-9706-5516cb48c098"
-export const OAUTH_SCOPE = "kimi-code"
 export const OAUTH_DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code"
 export const OAUTH_REFRESH_GRANT = "refresh_token"
 
