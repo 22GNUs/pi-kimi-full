@@ -178,9 +178,7 @@ export default function (pi: ExtensionAPI) {
               updated.contextWindow = discovery.context_length
             }
 
-            if (discovery?.model_display) {
-              updated.name = discovery.model_display
-            }
+
 
             return updated
           })
