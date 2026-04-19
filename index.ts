@@ -178,11 +178,10 @@ export default function (pi: ExtensionAPI) {
               updated.contextWindow = discovery.context_length
             }
 
-            // Use the server-reported display_name (e.g. "K2.6") so the user
-            // can see which backend model their account is actually routed to.
-            // This is the only reliable signal — the wire model id for both
-            // K2.5 and K2.6 accounts is "kimi-for-coding", but the display_name
-            // differs ("K2.5" vs "K2.6"), so it tells the user what they got.
+            // Use the server-reported display_name so the user can see
+            // which backend model their account is actually routed to.
+            // The wire model id is the same for all tiers, so display_name
+            // is the only way to tell them apart.
             if (discovery?.model_display) {
               updated.name = discovery.model_display
             }
