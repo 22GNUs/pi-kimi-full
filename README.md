@@ -22,8 +22,7 @@ Kimi For Coding (OAuth) provider extension for pi, matching the official kimi-cl
 
 ```bash
 # Clone and link
-git clone <this-repo> /path/to/pi-kimi-full
-ln -s /path/to/pi-kimi-full ~/.pi/agent/extensions/pi-kimi-full
+git clone https://github.com/22GNUs/pi-kimi-full.git ~/.pi/agent/extensions/pi-kimi-full
 ```
 
 Pi auto-discovers extensions in `~/.pi/agent/extensions/`.
@@ -32,13 +31,13 @@ Pi auto-discovers extensions in `~/.pi/agent/extensions/`.
 
 ```bash
 # Clone into your project
-git clone <this-repo> .pi/extensions/pi-kimi-full
+git clone https://github.com/22GNUs/pi-kimi-full.git .pi/extensions/pi-kimi-full
 ```
 
 ### Option 3: One-off test
 
 ```bash
-pi -e /path/to/pi-kimi-full
+pi -e https://github.com/22GNUs/pi-kimi-full.git
 ```
 
 ## Usage
